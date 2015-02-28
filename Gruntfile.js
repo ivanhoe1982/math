@@ -23,7 +23,7 @@ module.exports = function(grunt) {
                 // A single entry point for our app
                 src: 'src/js/entry.js',
                 // Compile to a single file to add a script tag for in your HTML
-                dest: 'tmp/main.min.js'
+                dest: 'tmp/main.js'
             }
         },
 
@@ -59,7 +59,7 @@ module.exports = function(grunt) {
 
         copy: {
             main: {
-                src: 'tmp/main.min.js',
+                src: 'tmp/main.js',
                 dest: 'dist/js/main.min.js'
             }
         },
@@ -79,18 +79,9 @@ module.exports = function(grunt) {
             },
             build: {
                 files: {
-                    'dist/js/main.min.js': 'tmp/main.min.js',
+                    'dist/js/main.min.js': 'tmp/main.js',
                     'dist/js/mocha.min.js': 'bower_components/mocha/mocha.js',
                     'dist/js/tests.js': 'test/functionFactoryTests.js'
-                }
-            }
-        },
-
-        // compile less stylesheets to css -----------------------------------------
-        less: {
-            build: {
-                files: {
-                    'dist/css/pretty.css': 'src/css/pretty.less'
                 }
             }
         },
@@ -155,7 +146,8 @@ module.exports = function(grunt) {
     // CREATE TASKS ==============================================================
     // ===========================================================================
     //'jshint',
-    grunt.registerTask('development', ['peg','browserify','copy', 'less']);
-    grunt.registerTask('production', ['peg','browserify','uglify', 'htmlmin', 'cssmin', 'less']);
+    //grunt.registerTask('development', ['peg','browserify','copy']);
+    grunt.registerTask('development', ['peg','browserify','copy','htmlmin']); //copy instead of uglify
+    grunt.registerTask('production', ['peg','browserify','uglify', 'htmlmin', 'cssmin']);
 
 };
