@@ -1,11 +1,20 @@
 /**
- * Created by ivanhoe on 2/26/15.
+ * Created by Lukasz Lewandowski on 2/26/15.
  */
+'use strict';
 
 var parser = require('./pegjs/math.js');
 
 
-var functionFactory = function() {
+/**
+ * Dynamically creates a function based on list of arguments and parsable expression in a set PEGJS grammar.
+ *
+ * @constructor
+ * @param {array} arguments - array of strings representing arguments of the returned function
+ * @param {string} expression - PEGJS grammar compliant expression
+ */
+
+var functionFactory = function(/*arguments,expression */) {
     var inner = function(params,exp) {
         var body =
             '    var params=["'+params.join('","')+'"];'+
@@ -44,13 +53,13 @@ var functionFactory = function() {
         }
         var eres = new Array();
 
-        for(var c of a) {
+        a.forEach(function(c) {
         //examine if each of the arguments and check if it is in the expression
             var i = b.indexOf(c);
             if (i == -1) {
                 eres.push(c);
             }
-        }
+        });
         if (eres.length>0) {
             var msg = eres.join(', ');
             throw new Error('Arguments '+ msg +' are not in the expression. Check your expression or remove some arguments')
@@ -72,11 +81,11 @@ var functionFactory = function() {
             throw new Error('Incorrect number of arguments. Expected '+expectedArguments);
         } else {
             var args = Array.prototype.slice.call(arguments);
-            for (a of args){
+            args.forEach(function(a){
                 if( typeof a !== "number" ) {
                     throw new Error('Arguments have to be numbers. Incorrect argument '+a)
                 }
-            }
+            });
         }
         var x = res.apply(null,arguments);
         console.log("|"+x+"|");
