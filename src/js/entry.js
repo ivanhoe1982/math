@@ -26,17 +26,20 @@ var app = angular.module('mathapp',[]);
 app.controller('testsController', ['$scope', function($scope) {
 
     $scope.formulas = [
-        {  name : 'example function A',
-            arguments : ['one','two','three'],
-            expression : 'one*two*three',
-            result:123},
-        //addArgument : addArgument},
+        {
+            name: 'example function A',
+            arguments: ['one', 'two', 'three'],
+            expression: 'one*two*three'
+        },
         {  name : 'example function B',
             arguments : ['one','two','three'],
-            expression : 'one*two*three'},
+            expression : 'one*two*three'
+        },
+
         {  name : 'example function C',
             arguments : ['one','two','three'],
-            expression : 'one*two*three'}
+            expression : 'one*two*three'
+        }
     ];
 
     $scope.addFormula = function() {
@@ -45,24 +48,70 @@ app.controller('testsController', ['$scope', function($scope) {
             expression : 'one*two*three'});
     };
 
-    $scope.addArgument = function(f) {
-        f.arguments.push('new');
-    };
 }]);
 
-app.controller('formulaController', ['$scope', function($scope) {
+app.controller('formulaController', ['$scope','$sce', function($scope,$sce) {
 
-    $scope.$watch('f', function (formula) {
+
+    $scope.addArgument = function(formula) {
+        formula.arguments.push('new');
+    };
+
+    var evaluate = function(formula, update) {
+        var newFun;
+        var newRes;
+        try {
+            newFun = functionFactory(formula.arguments,formula.expression);
+            if(!formula.argumentValues) {
+                formula.argumentValues = Array.apply(null, new Array(formula.arguments.length)).map(function(){return 1});
+
+            };
+            newRes = newFun.apply(this,formula.argumentValues); //apply needed given variable number of arguments
+            formula.message = newRes;
+
+        } catch (e) {
+            formula.message =  e.message;
+        }
+        update(formula);
+    };
+
+
+    $scope.$watch('formula', function (formula,oldVal,s) {
         console.log('watch on formula'); //TODO: probably not needed
-    },true);
+        console.log(formula);
+        evaluate(formula,function(f) {
+            //$scope.apply(function() {
+                $scope.$parent.formula.argumentValues = f.argumentValues;
+                $scope.$parent.formula.message = $sce.trustAsHtml(f.message.toString());
 
-    $scope.$watch('f.arguments', function (formula) {
-        console.log('watch on arguments'); //TODO: can't capture changes
+            //$scope.$parent.apply();
+            //});
+        });
     },true);
-
-    $scope.$watch('f.expression', function (formula) {
-        console.log('watch on expression');
-    });
+    //
+    //$scope.$watch('argument', function (argument,oldVal,s) {
+    //    console.log('watch on argument'); //TODO: can't capture changes
+    //    console.log(argument);
+    //    //evaluate(s.$parent.formula,function(formula) {
+    //    //    //s.apply(function() {
+    //    //        s.$parent.formula.argumentValues = formula.argumentValues;
+    //    //        s.$parent.formula.message = formula.message;
+    //    //        s.$parent.formula.result = formula.result;
+    //    //    //});
+    //    //});
+    //},true); //deep watch
+    ////
+    //$scope.$watch('expression', function (expression,oldVal,s) {
+    //    console.log('watch on expression');
+    //    console.log(expression);
+    //    //evaluate(s.$parent.f,function(formula) {
+    //    //    s.apply(function() {
+    //    //        s.$parent.f.argumentValues=formula.argumentValues;
+    //    //        s.$parent.f.message=formula.message;
+    //    //        s.$parent.f.result=formula.result;
+    //    //    });
+    //    //});
+    //});
 }]);
 
 

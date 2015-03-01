@@ -1,7 +1,7 @@
 /**
  * Created by Lukasz Lewandowski on 2/26/15.
  */
-'use strict';
+//'use strict';
 
 var parser = require('./pegjs/math.js');
 
@@ -62,7 +62,7 @@ var functionFactory = function(/*arguments,expression */) {
         });
         if (eres.length>0) {
             var msg = eres.join(', ');
-            throw new Error('Arguments '+ msg +' are not in the expression. Check your expression or remove some arguments')
+            throw new Error('Arguments <em>'+ msg +'</em> are not in the expression. Check your expression or remove some arguments')
         }
     }
 
@@ -70,20 +70,21 @@ var functionFactory = function(/*arguments,expression */) {
     //definition fine, let's test it with simple substitution and in case the parser complains throw an exception
     //catching an exception
     try {
-        var test = parser.parse(res(0,0,0));
+        var args = Array.apply(null, new Array(expectedArguments)).map(function(){return 1});
+        var test = parser.parse(res.apply(null,args));
     }
     catch (e) {
-        throw new Error('Expression cannot be parsed: '+arguments[1] + ' | Parser says: ' +e.message);
+        throw new Error('Expression cannot be parsed: '+arguments[1] + ' | Parser says: <em>' +e.message + '</em>');
     }
 
     return function() {
         if(arguments.length!=expectedArguments) {
-            throw new Error('Incorrect number of arguments. Expected '+expectedArguments);
+            throw new Error('Incorrect number of arguments. Expected <em>'+expectedArguments+'</em>');
         } else {
             var args = Array.prototype.slice.call(arguments);
             args.forEach(function(a){
                 if( typeof a !== "number" ) {
-                    throw new Error('Arguments have to be numbers. Incorrect argument '+a)
+                    throw new Error('Arguments have to be numbers. Incorrect argument <em>'+a+'</em>')
                 }
             });
         }
