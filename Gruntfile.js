@@ -93,8 +93,9 @@ module.exports = function(grunt) {
             },
             build: {
                 files: {
-                    'dist/css/style.min.css': 'src/css/style.css',
-                    'dist/css/mocha.min.css': 'src/css/mocha.css'
+                    'dist/css/main.min.css': 'bower_components/bootstrap/dist/css/bootstrap.min.css'
+                    //,
+                    //'dist/css/mocha.min.css': 'src/css/mocha.css'
                 }
             }
         },
@@ -153,7 +154,7 @@ module.exports = function(grunt) {
     // ===========================================================================
     //'jshint',
     //grunt.registerTask('development', ['peg','browserify','copy']);
-    grunt.registerTask('development', ['peg','browserify','copy','htmlmin']); //copy instead of uglify
+    grunt.registerTask('development', ['peg','browserify','copy','htmlmin','cssmin']); //copy instead of uglify
     grunt.registerTask('production', ['peg','browserify','uglify', 'htmlmin', 'cssmin']);
 
 };

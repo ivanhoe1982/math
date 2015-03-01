@@ -4,13 +4,61 @@
     <title>Mocha</title>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="css/mocha.min.css" />
+    <link rel="stylesheet" href="css/main.min.css" />
 </head>
 
 <body>
-<div id="mocha" ng-controller="testsController"></div>
+
+<div ng-controller="testsController as tc">
+<h3>Dynamic formulas <small>constructed on the fly</small></h3>
+    <!--formula-->
 
 
+    <div>
+        <div ng-repeat="f in formulas" ng-controller="formulaController">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h3 class="panel-title">{{f.name}}</h3>
+                </div>
+                <div class="panel-body container-fluid">
+                    <div class="row">
+                        <!--argument-->
+
+
+                        <div class="col-md-1" ng-repeat="a in f.arguments track by $index">
+                            <div class="input-group">
+                                <input type="text" class="form-control" placeholder="name" ng-model="f.arguments[$index]" aria-describedby="basic-addon1" ng-model="a">
+                            </div>
+                            <div class="input-group">
+                                <input type="text" class="form-control" placeholder="value" aria-describedby="basic-addon1">
+                            </div>
+                        </div>
+
+                        <div class="col-md-1">
+                            <button type="button" class="btn btn-primary btn-sm" ng-click="addArgument(f)">Add argument</button>
+                        </div>
+                        <div class="col-md-4">
+                            <!--expression-->
+                            <div class="input-group">
+                                <input type="text" class="form-control" placeholder="expression" aria-describedby="basic-addon1" ng-model="f.expression">
+                            </div>
+
+                        </div>
+                        <div class="col-md-3">
+                            <!--result-->
+                            <h4>{{f.result}}</h4>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="alert alert-success" role="alert" ng-model="f.message">error message if any</div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+        <button type="button" class="btn btn-primary btn-sm" ng-click="addFormula()">Add formula</button>
+    </div>
+</div>
 <script src="js/main.min.js"></script>
 </body>
 </html>

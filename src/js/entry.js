@@ -24,8 +24,62 @@ var functionFactory     = require('../../api/functionFactory.js');
 var app = angular.module('mathapp',[]);
 
 app.controller('testsController', ['$scope', function($scope) {
-    var functionA=functionFactory(["one","two","three"],'one*2+two^2*three');
-    alert(functionA(1,2,3));
+
+    $scope.formulas = [
+        {  name : 'example function A',
+            arguments : ['one','two','three'],
+            expression : 'one*two*three',
+            result:123},
+        //addArgument : addArgument},
+        {  name : 'example function B',
+            arguments : ['one','two','three'],
+            expression : 'one*two*three'},
+        {  name : 'example function C',
+            arguments : ['one','two','three'],
+            expression : 'one*two*three'}
+    ];
+
+    $scope.addFormula = function() {
+        $scope.formulas.push({  name : 'example function C',
+            arguments : ['one','two','three'],
+            expression : 'one*two*three'});
+    };
+
+    $scope.addArgument = function(f) {
+        f.arguments.push('new');
+    };
 }]);
 
+app.controller('formulaController', ['$scope', function($scope) {
+
+    $scope.$watch('f', function (formula) {
+        console.log('watch on formula'); //TODO: probably not needed
+    },true);
+
+    $scope.$watch('f.arguments', function (formula) {
+        console.log('watch on arguments'); //TODO: can't capture changes
+    },true);
+
+    $scope.$watch('f.expression', function (formula) {
+        console.log('watch on expression');
+    });
+}]);
+
+
+
+
+
+
+//var addArgument = function(formula) {
+//    $scope.formulas($scope.formulas.indexOf(formula)).arguments.push({});
+//    //$scope.apply(function(){
+//    //
+//    //});
+//};
+//    [
+//    functionFactory(["one","two","three"],'one*2+two^2*three'),
+//    functionFactory(["one","two","three"],'one*2+two^2*three'),
+//    functionFactory(["one","two","three"],'one*2+two^2*three')
+//];
+//alert(functionA(1,2,3));
 module.exports = app.name;
