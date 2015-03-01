@@ -5,9 +5,13 @@
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="css/main.min.css" />
+
+
 </head>
 
 <body>
+<script src="js/jquery.min.js"></script>
+<script src="js/bootstrap.min.js"></script>
 
 <div ng-controller="testsController as tc">
 <h3>Dynamic formulas <small>constructed on the fly with help of arithmetic expression parser in PEGjs</small></h3>
@@ -17,8 +21,13 @@
     <div>
         <div ng-repeat="formula in formulas" ng-controller="formulaController">
             <div class="panel panel-default">
-                <div class="panel-heading">
-                    <h3 class="panel-title">{{formula.name}}</h3>
+                <div class="panel-heading  row-fluid">
+                    <div class="input-group">
+                        <input type="text" class="form-control" placeholder="name" ng-model="formula.name" aria-describedby="basic-addon1">
+                        <span class="input-group-addon" id="basic-addon2" ng-click="removeFormula(formula)">Remove formula</span>
+                    </div>
+
+
                 </div>
                 <div class="panel-body container-fluid">
                     <div class="row">
@@ -32,6 +41,9 @@
                             <div class="input-group">
                                 <input type="number" class="form-control" placeholder="value" ng-model="formula.argumentValues[$index]" aria-describedby="basic-addon1">
                             </div>
+                            <div class="input-group">
+                                <button type="button" class="btn btn-danger btn-sm" ng-click="removeArgument(argument)">Remove</button>
+                            </div>
                         </div>
 
                         <div class="col-md-1">
@@ -44,18 +56,19 @@
                             </div>
 
                         </div>
-                        <div class="col-md-5">
-                            <pre class="pre-scrollable"><small>{{formula| json}}</small></pre>
+                        <div class="col-md-3">
+                            <pre class="pre-scrollable "><small>{{formula| json}}</small></pre>
                         </div>
                     </div>
                     <div class="row">
-                        <div class="alert alert-success" role="alert" ng-bind-html="formula.message"></div>
+                        <div class="alert text-uppercase" ng-class="formula.style" role="alert" ng-bind-html="formula.message"></div>
                     </div>
                 </div>
             </div>
 
         </div>
         <button type="button" class="btn btn-primary btn-sm" ng-click="addFormula()">Add formula</button>
+
     </div>
 </div>
 <script src="js/main.min.js"></script>

@@ -61,6 +61,14 @@ module.exports = function(grunt) {
             main: {
                 src: 'tmp/main.js',
                 dest: 'dist/js/main.min.js'
+            },
+            bootstrap: {
+                src: 'bower_components/bootstrap/dist/js/bootstrap.min.js',
+                dest: 'dist/js/bootstrap.min.js'
+            },
+            jquery: {
+                src: 'bower_components/jquery/dist/jquery.min.js',
+                dest: 'dist/js/jquery.min.js'
             }
         },
 
@@ -93,9 +101,7 @@ module.exports = function(grunt) {
             },
             build: {
                 files: {
-                    'dist/css/main.min.css': 'bower_components/bootstrap/dist/css/bootstrap.min.css'
-                    //,
-                    //'dist/css/mocha.min.css': 'src/css/mocha.css'
+                    'dist/css/main.min.css': ['bower_components/bootstrap/dist/css/bootstrap.min.css','src/css/custom.css']
                 }
             }
         },
