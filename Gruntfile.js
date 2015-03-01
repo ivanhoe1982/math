@@ -107,7 +107,7 @@ module.exports = function(grunt) {
             },
             scripts: {
                 files: 'src/**/*.js',
-                tasks: ['uglify'] //'jshint',
+                tasks: ['browserify','copy'] //'jshint',
             },
             pegjs: {
                 files: 'api/pegjs/*.pegjs',
@@ -116,6 +116,12 @@ module.exports = function(grunt) {
             html: {
                 files: 'src/*.html',
                 tasks: ['htmlmin']
+            },
+            configFiles: {
+                files: [ 'Gruntfile.js'],
+                options: {
+                    reload: true
+                }
             }
         },
 

@@ -11,17 +11,21 @@
 //</script>
 'use strict';
 
-//var angular             = require('../../bower_components/angular/angular.js');
+var angular             = require('angular');
 
 //var mocha           = require('../../bower_components/mocha/mocha.js'); //does not work with browserify
 var mathparse           = require('../../api/pegjs/math.js');
 var functionFactory     = require('../../api/functionFactory.js');
 //var tests           = require('../../test/functionFactoryTests.js');
-//require('angular-route/angular-route');
+
+
 
 // Create your app
-//var app = angular.module('math',[]);
+var app = angular.module('mathapp',[]);
 
-var functionA=functionFactory(["one","two","three"],'one*2+two^2*three');
+app.controller('testsController', ['$scope', function($scope) {
+    var functionA=functionFactory(["one","two","three"],'one*2+two^2*three');
+    alert(functionA(1,2,3));
+}]);
 
-alert(functionA(1,2,3));
+module.exports = app.name;
