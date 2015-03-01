@@ -16,15 +16,17 @@
 <div ng-controller="testsController as tc">
 <h3>Dynamic formulas <small>constructed on the fly with help of arithmetic expression parser in PEGjs</small></h3>
     <!--formula-->
-
-
     <div>
         <div ng-repeat="formula in formulas" ng-controller="formulaController">
             <div class="panel panel-default">
                 <div class="panel-heading  row-fluid">
                     <div class="input-group">
-                        <input type="text" class="form-control" placeholder="name" ng-model="formula.name" aria-describedby="basic-addon1">
-                        <span class="input-group-addon" id="basic-addon2" ng-click="removeFormula(formula)">Remove formula</span>
+                        <!--<form name="form">-->
+                            <input type="text" name="name" class="form-control" placeholder="name" ng-model="formula.name"
+                                   aria-describedby="basic-addon1" data-toggle="tooltip" title="Just a name" ng-pattern="/[a-zA-Z]*/">
+                            <label>{{form.name.$valid}}</label>
+                            <span class="input-group-addon" id="basic-addon2" ng-click="removeFormula(formula)">Remove formula</span>
+                        <!--</form>-->
                     </div>
 
 
@@ -56,9 +58,12 @@
                             </div>
 
                         </div>
-                        <div class="col-md-3">
+                        <div class="col-md-2">
                             <pre class="pre-scrollable "><small>{{formula| json}}</small></pre>
                         </div>
+                        <!--<div class="col-md-2">-->
+                            <!--<pre class="pre-scrollable "><small>{{formula.function.toString()}}</small></pre>-->
+                        <!--</div>-->
                     </div>
                     <div class="row">
                         <div class="alert text-uppercase" ng-class="formula.style" role="alert" ng-bind-html="formula.message"></div>
@@ -72,5 +77,10 @@
     </div>
 </div>
 <script src="js/main.min.js"></script>
+<script>
+    $(function () {
+        $('[data-toggle="tooltip"]').tooltip()
+    });
+</script>
 </body>
 </html>

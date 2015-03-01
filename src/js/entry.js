@@ -1,14 +1,6 @@
 /**
  * Created by ivanhoe on 2/28/15.
  */
-//<script src="js/math.min.js">
-//<script src="js/should.min.js">
-//<script src="js/mocha.min.js">
-//<script>mocha.setup('bdd')</script>
-//<script src="js/tests.js"></script>
-//<script>
-//mocha.run();
-//</script>
 'use strict';
 
 var angular             = require('angular');
@@ -19,37 +11,16 @@ var functionFactory     = require('../../api/functionFactory.js');
 //var tests           = require('../../test/functionFactoryTests.js');
 
 
-
 // Create your app
 var app = angular.module('mathapp',[]);
 
 app.controller('testsController', ['$scope', function($scope) {
-
-    //$scope.formulas = [
-    //    {
-    //        name: 'example function A',
-    //        arguments: ['one', 'two', 'three'],
-    //        expression: 'one*two*three'
-    //    },
-    //    {  name : 'example function B',
-    //        arguments : ['one','two','three'],
-    //        expression : 'one*two*three'
-    //    },
-    //
-    //    {  name : 'example function C',
-    //        arguments : ['one','two','three'],
-    //        expression : 'one*two*three'
-    //    }
-    //];
 
     $scope.addFormula = function() {
         if(!$scope.formulas) {
             $scope.formulas=[];
         }
         $scope.formulas.push({arguments:[],argumentValues:[],expression:""});
-        //$scope.formulas.push({  name : 'example function C',
-        //    arguments : ['one','two','three'],
-        //    expression : 'one*two*three'});
     };
 
     $scope.removeFormula = function(formula) {
@@ -59,7 +30,6 @@ app.controller('testsController', ['$scope', function($scope) {
 }]);
 
 app.controller('formulaController', ['$scope','$sce', function($scope,$sce) {
-
 
     $scope.addArgument = function(formula) {
         if(!formula.arguments) {
@@ -95,30 +65,15 @@ app.controller('formulaController', ['$scope','$sce', function($scope,$sce) {
             };
             newRes = newFun.apply(this,formula.argumentValues); //apply needed given variable number of arguments
             formula.style = 'alert-success';
-            formula.message = $sce.trustAsHtml(newRes.toString());
+            formula.message = $sce.trustAsHtml("= " + newRes.toString());
+            //formula.function=newFun;
 
         } catch (e) {
             formula.style = 'alert-danger';
             formula.message =  $sce.trustAsHtml(e.message.toString());
+            //formula.function='';
         }
     },true);
 }]);
 
-
-
-
-
-
-//var addArgument = function(formula) {
-//    $scope.formulas($scope.formulas.indexOf(formula)).arguments.push({});
-//    //$scope.apply(function(){
-//    //
-//    //});
-//};
-//    [
-//    functionFactory(["one","two","three"],'one*2+two^2*three'),
-//    functionFactory(["one","two","three"],'one*2+two^2*three'),
-//    functionFactory(["one","two","three"],'one*2+two^2*three')
-//];
-//alert(functionA(1,2,3));
 module.exports = app.name;

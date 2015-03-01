@@ -5,6 +5,7 @@ var should = require('should');
 
 describe('functionFactory',function() {
     var functionFactory=require('../api/functionFactory.js');
+    var functionRegistry=require('../api/functionRegistry.js');
 
     describe('constructor',function() {
 
@@ -54,6 +55,7 @@ describe('functionFactory',function() {
     describe('generated functions',function() {
         var functionA;
         var functionB;
+        var functionC;
         beforeEach(function(done) {
             functionA=functionFactory(["one","two","three"],'one*2+two^2*three');
             functionB=functionFactory(["one","two"],'one*2+two^2');
@@ -83,10 +85,11 @@ describe('functionFactory',function() {
         });
 
         it('should throw if any of the arguments is not a number',function() {
-            functionA.bind(null,1,2,'a').should.throw(/^Arguments have to be numbers. Incorrect argument <strong>a<\/strong>/);
-            functionA.bind(null,1,2,'b').should.throw(/^Arguments have to be numbers. Incorrect argument <strong>b<\/strong>/);
-            functionA.bind(null,'c',2,'a').should.throw(/^Arguments have to be numbers. Incorrect argument <strong>c<\/strong>/);
-            functionA.bind(null,1,2,3).should.not.throw(/^Arguments have to be numbers. Incorrect argument <strong>a<\/strong>/);
+            functionA.bind(null,1,2,'a').should.throw(/^Arguments have to be numbers or null. Incorrect argument <strong>a<\/strong>/);
+            functionA.bind(null,1,2,'b').should.throw(/^Arguments have to be numbers or null. Incorrect argument <strong>b<\/strong>/);
+            functionA.bind(null,'c',2,'a').should.throw(/^Arguments have to be numbers or null. Incorrect argument <strong>c<\/strong>/);
+            functionA.bind(null,['c'],2,'a').should.throw(/^Arguments have to be numbers or null. Incorrect argument <strong>c<\/strong>/);
+            functionA.bind(null,1,2,3).should.not.throw(/^Arguments have to be numbers or null. Incorrect argument <strong>a<\/strong>/);
         });
 
         it('should return a number for numeric arguments',function(){
@@ -96,19 +99,106 @@ describe('functionFactory',function() {
 
             functionC.bind(null,1).should.not.throw();
             functionC(1).should.equal(1);
-
-
         });
 
-
-    });
-
-    describe('should throw if a reserved word is used as an argument name',function() {
-
-
-        it.only('should handle special case of token "new"',function(){
+        it('should handle special case of token "new"',function(){
             functionFactory.bind(null,["new"],'new').should.throw(/^Argument <strong>new<\/strong> is a reserved JavaScript keyword. Change it./);
+            functionFactory.bind(null,["instanceof"],'instanceof').should.throw(/^Argument <strong>instanceof<\/strong> is a reserved JavaScript keyword. Change it./);
+        });
+
+        it('should register a with functionRegistry if functionFactory given third argument',function(){
+            var functionA=functionFactory(["one","two","three"],'one*2+two^2*three','sampleFunction');
 
         });
+
+        it('if itself registered, calling it with some null parameters should start lookup in registered arguments in functionRegister"',function(){
+            var args = {one: 1, two: 2};
+            functionRegistry.registerArguments(args);
+            functionRegistry.argumentByName('one').should.equal(1);
+            functionRegistry.argumentByName('two').should.equal(2);
+
+            var functionA=functionFactory(["one","two","three"],'one*2+two^2*three','s1');
+            var result = functionA(null,null,77);
+            result.should.equal(1*2+Math.pow(2,2)*77); //TODO: doesn't work well without brackets
+
+        });
+
+        it('if itself registered, it should look for value in functionRegistry if argument name equals name of a registered function"',function(){
+            //we will register a handful of arguments and call a function dependent on another function
+            var args = {one: 1, two: 2, three: 3};
+            functionRegistry.registerArguments(args);
+
+            var functionA=functionFactory(["one","two","three"],'one*2+two^2*three','s1');
+            var functionB=functionFactory(["one","two","s1"],'one*2+two^2*s1','s2');
+
+            var res = functionB(1,2,null);
+            res.should.equal(1*2+Math.pow(2,2)*14); //TODO: power does not work without brackets
+        });
+        it('if itself registered, should look for value and throw if functionRegistry throws"',function() {
+            var args = {one: 1, two: 2, three: 3};
+            functionRegistry.registerArguments(args);
+
+            var functionA=functionFactory(["one","two","three"],'one*2+two^2*three','s1');
+            var functionB=functionFactory(["one","two","s3"],'one*2+two^2*s3','s2');
+
+            var res = functionB.bind(null,1,2,null).should.throw(/^Argument or function not registered: <strong>s3<\/strong>/);
+        });
     });
+
+    describe('registry if a third argument is given',function() {
+        it('should return a function by name',function(){
+            var functionA=functionFactory(["one","two","three"],'one*2+two^2*three','sampleFunction');
+            var functionB=functionFactory(["one","two","three"],'one*2+two^2*three','sampleFunction2');
+
+            functionRegistry.functionByUniqueName('sampleFunction').should.be.exactly(functionA);
+            functionRegistry.functionByUniqueName('sampleFunction').should.not.be.exactly(functionB);
+        });
+
+        it('should throw if trying to get an unknown function by name',function(){
+            var functionA=functionFactory(["one","two","three"],'one*2+two^2*three','sampleFunction');
+            functionRegistry.functionByUniqueName.bind(null,'dupa').should.throw(/^Function not registered: <strong>dupa<\/strong>/);
+        });
+
+        it('should confirm if it has a function by name',function(){
+            var functionA=functionFactory(["one","two","three"],'one*2+two^2*three','sampleFunction');
+
+            functionRegistry.hasFunctionByUniqueName('sampleFunction').should.be.exactly(true);
+            functionRegistry.hasFunctionByUniqueName('sampleFunction2').should.not.be.exactly(false);
+        });
+
+        it('should accept a dictionary of arguments for a system of functions',function(){
+            var args = {first: 1, second: 2};
+            functionRegistry.registerArguments(args);
+            functionRegistry.argumentByName('first').should.equal(1);
+            functionRegistry.argumentByName('second').should.equal(2);
+        });
+
+
+        it('should throw if trying to get an unknown argument by name',function(){
+            var args = {first: 1, second: 2};
+            functionRegistry.registerArguments(args);
+            functionRegistry.argumentByName.bind(null,'second').should.not.throw();
+        });
+
+        it.only('should throw if function evaluated more than N times in one computation chain',function(){
+            var args = {one: 1, two: 2, three: 3};
+            functionRegistry.registerArguments(args);
+
+            var functionA=functionFactory(["one","two","s2"],'one*2+two^2*s2','s1');
+            var functionB=functionFactory(["one","two","s1"],'one*2+two^2*s1','s2');
+
+            var res = functionB.bind(null,1,2,null).should.throw(/^Cyclical computation: 1000 iterations limit reached/);
+        });
+
+        it('should explain which arguments are unused so far');
+
+
+        //it('should explain which arguments are unused so far',function(){
+        //
+        //});
+
+
+
+    });
+
 });
