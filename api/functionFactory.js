@@ -14,17 +14,31 @@ var parser = require('./pegjs/math.js');
  * @param {string} expression - PEGJS grammar compliant expression
  */
 
+var checkIfLegal= function(word) {
+    var reservedKeywords = [
+        'do','if','in','for','let','new','try','var','case','else','enum','eval','null','this','true','void','with','break',
+        'catch','class','const','false','super','throw','while','yield','delete','export','import','public','return',
+        'static','switch','typeof','default','extends','finally','package','private','continue','debugger','function',
+        'arguments','interface','protected','implements','instanceof'];
+    return reservedKeywords.indexOf(word.toLowerCase()) >-1;
+}
+
+
 var functionFactory = function(/*arguments,expression */) {
     var inner = function(params,exp) {
         var body =
             '    var params=["'+params.join('","')+'"];'+
             '    var expRepl="'+exp+'";'+
             '    for(i=0; i<arguments.length; i++) {'+
-            '       expRepl = expRepl.replace(params[i],arguments[i]);'+
+            '       expRepl = expRepl.split(params[i]).join(arguments[i]);'+
             '    };'+
             '    return expRepl;';
+        //try {
+            return new Function(params,body);
+        //} catch(e) {
+        //    console.log(e);
+        //}
 
-        return new Function(params,body);
     };
 
     var expectedArguments = 0;
@@ -32,59 +46,70 @@ var functionFactory = function(/*arguments,expression */) {
         throw new Error('Wrong arguments: requires two arguments: a list of arguments and an expression')
     }
     else {
-        var a = arguments[0];
-        var b = arguments[1];
+        var args = arguments[0];
+        var expr = arguments[1];
 
-        if( Object.prototype.toString.call(a) != '[object Array]' ) {
+        if( Object.prototype.toString.call(args) != '[object Array]' ) {
             throw new Error('Wrong arguments: first argument needs to be an array of arguments')
         } else {
-            if(a.length<=0) {
+            if(args.length<=0) {
                 throw new Error('Wrong arguments: array of arguments cannot be empty')
             } else {
-                expectedArguments= a.length;
+                expectedArguments= args.length;
             }
         }
-        if( Object.prototype.toString.call(b) != '[object String]' ) {
+        if( Object.prototype.toString.call(expr) != '[object String]' ) {
             throw new Error('Wrong arguments: second needs to be a string')
         } else {
-            if (b.length<=0) {
+            if (expr.length<=0) {
                 throw new Error('Wrong arguments: expression empty');
             }
         }
-        var eres = new Array();
 
-        a.forEach(function(c) {
-        //examine if each of the arguments and check if it is in the expression
-            var i = b.indexOf(c);
-            if (i == -1) {
-                eres.push(c);
+        //check if all arguments are legal words
+        args.forEach(function(c) {
+            //examine if each of the arguments is in expression
+            if (checkIfLegal(c)) {
+                throw new Error ('Argument <strong>'+c+'</strong> is a reserved JavaScript keyword. Change it.')
             }
         });
-        if (eres.length>0) {
-            var msg = eres.join(', ');
-            throw new Error('Arguments <em>'+ msg +'</em> are not in the expression. Check your expression or remove some arguments')
+
+        var temp = new Array();
+
+        args.forEach(function(c) {
+        //examine if each of the arguments is in expression
+            var i = expr.indexOf(c);
+            if (i == -1) {
+                temp.push(c);
+            }
+        });
+        if (temp.length>0) {
+            var msg = temp.join(', ');
+            throw new Error('Arguments <strong>'+ msg +'</strong> are not in the expression. Check your expression or remove some arguments')
         }
     }
 
+    //here we actually call the dynamic function constructor and get it into RES
     var res=inner.apply(null,arguments);
-    //definition fine, let's test it with simple substitution and in case the parser complains throw an exception
+
+    //with res instantiation done, let's test it with simple substitution and in case the parser complains throw an exception
     //catching an exception
     try {
         var args = Array.apply(null, new Array(expectedArguments)).map(function(){return 1});
         var test = parser.parse(res.apply(null,args));
     }
     catch (e) {
-        throw new Error('Expression cannot be parsed: '+arguments[1] + ' | Parser says: <em>' +e.message + '</em>');
+        throw new Error('Expression cannot be parsed: '+arguments[1] + ' | Parser says: <strong>' +e.message + '</strong>');
     }
 
     return function() {
         if(arguments.length!=expectedArguments) {
-            throw new Error('Incorrect number of arguments. Expected <em>'+expectedArguments+'</em>');
+            throw new Error('Incorrect number of arguments. Expected <strong>'+expectedArguments+'</strong>');
         } else {
             var args = Array.prototype.slice.call(arguments);
             args.forEach(function(a){
                 if( typeof a !== "number" ) {
-                    throw new Error('Arguments have to be numbers. Incorrect argument <em>'+a+'</em>')
+                    throw new Error('Arguments have to be numbers. Incorrect argument <strong>'+a+'</strong>')
                 }
             });
         }
