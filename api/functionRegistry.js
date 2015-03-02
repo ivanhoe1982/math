@@ -42,6 +42,14 @@ module.exports =  {
     registerArguments : function(args) {
         registeredArguments=args;
     },
+    deregister : function(arg) {
+        if (registeredArguments[arg]){
+            delete registeredArguments[arg];
+        }
+        if (registeredFunctions[arg]){
+            delete registeredFunctions[arg];
+        }
+    },
     argumentByName : function(name) {
         if (registeredArguments[name])
         {

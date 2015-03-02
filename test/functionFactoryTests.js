@@ -180,7 +180,7 @@ describe('functionFactory',function() {
             functionRegistry.argumentByName.bind(null,'second').should.not.throw();
         });
 
-        it.only('should throw if function evaluated more than N times in one computation chain',function(){
+        it('should throw if function evaluated more than N times in one computation chain',function(){
             var args = {one: 1, two: 2, three: 3};
             functionRegistry.registerArguments(args);
 
@@ -188,6 +188,19 @@ describe('functionFactory',function() {
             var functionB=functionFactory(["one","two","s1"],'one*2+two^2*s1','s2');
 
             var res = functionB.bind(null,1,2,null).should.throw(/^Cyclical computation: 1000 iterations limit reached/);
+        });
+
+        it('should have the ability to register functions and arguments by name',function(){
+            var args = {first: 1, second: 2};
+            functionRegistry.registerArguments(args);
+            functionRegistry.deregister('second');
+            functionRegistry.argumentByName.bind(null,'second').should.throw(/^Argument or function not registered: <strong>second<\/strong>/);
+
+            functionFactory(["one","two"],'one*2+two^2*two','s1');
+            functionFactory(["one","two"],'one*2+two^2*two','s2');
+            functionRegistry.deregister('s1');
+            functionRegistry.functionByUniqueName.bind(null,'s1').should.throw(/^Function not registered: <strong>s1<\/strong>/);
+
         });
 
         it('should explain which arguments are unused so far');

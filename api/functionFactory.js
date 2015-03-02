@@ -26,7 +26,9 @@ var checkIfLegal= function(word) {
 };
 
 var functionFactory = function(/*arguments,expression,name*/) {
-
+    if(cyclical>MAXCYCLICAL) {
+        console.log(cyclical);
+    }
     var args = arguments[0];
     var expr = arguments[1];
     var uniquename = arguments[2];
@@ -92,6 +94,7 @@ var functionFactory = function(/*arguments,expression,name*/) {
 
     var inner = function() {
         if (cyclical>MAXCYCLICAL){
+            cyclical=0;
             throw new Error('Cyclical computation: '+MAXCYCLICAL+' iterations limit reached');
         };
         var expRepl = exp;
@@ -117,7 +120,9 @@ var functionFactory = function(/*arguments,expression,name*/) {
     //catching and passing the parser exception
     try {
         var args = Array.apply(null, new Array(expectedArguments)).map(function(){return 1});
+        cyclical=cyclical+1;
         var test = parser.parse(inner.apply(null,args));
+        cyclical=cyclical-1;
     }
     catch (e) {
         throw new Error('Expression cannot be parsed: '+arguments[1] + ' | Parser says: <strong>' +e.message + '</strong>');
@@ -153,6 +158,8 @@ var functionFactory = function(/*arguments,expression,name*/) {
     if(uniquename) {
         functionRegistry.registerFunction(uniquename,finalFunc); //saving res for future evaluations
     }
+
+
 
     return finalFunc;
 };
