@@ -3,17 +3,11 @@
  */
 'use strict';
 
-var angular             = require('angular');
+var angular   = require('angular');
+var functions = require('../../api/functionFactory.js');
 
-//var mocha           = require('../../bower_components/mocha/mocha.js'); //does not work with browserify
-var mathparse           = require('../../api/pegjs/math.js');
-var functions     = require('../../api/functionFactory.js');
-
-var functionFactory=functions.factory;
-var functionRegistry=functions.registry;
-
-//var tests           = require('../../test/functionFactoryTests.js');
-
+var functionFactory  = functions.factory;
+var functionRegistry = functions.registry;
 
 // Create your app
 var app = angular.module('mathapp',[]);
@@ -26,14 +20,11 @@ Object.size = function(obj) {
 };
 
 app.controller('testsController', ['$scope', function($scope) {
-
     $scope.addSharedArgument = function() {
         if(!$scope.sharedArguments) {
             $scope.sharedArguments=[];
-
         }
         $scope.sharedArguments.push({key:'some',value:1});
-
     };
 
     $scope.removeSharedArgument = function(sharedArgument) {
@@ -69,9 +60,7 @@ app.controller('formulaController', ['$scope','$sce', function($scope,$sce) {
         if(!formula.arguments) {
             formula.arguments=[];
         }
-
         formula.arguments.push({name:'new',value:1});
-
     };
 
     $scope.removeArgument = function(argument) {

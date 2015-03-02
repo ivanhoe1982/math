@@ -16,58 +16,55 @@ var MAXCYCLICAL=1000;
  * @param {string} expression - PEGJS grammar compliant expression
  */
 
-var checkIfLegal= function(word) {
+var checkIfLegal= function(word,errorf) {
     var reservedKeywords = [
         'do','if','in','for','let','new','try','var','case','else','enum','eval','null','this','true','void','with','break',
         'catch','class','const','false','super','throw','while','yield','delete','export','import','public','return',
         'static','switch','typeof','default','extends','finally','package','private','continue','debugger','function',
         'arguments','interface','protected','implements','instanceof'];
-    return reservedKeywords.indexOf(word.toLowerCase()) >-1;
+    if (reservedKeywords.indexOf(word.toLowerCase()) >-1) {
+        errorf(word)
+    }
 };
 
 var functionFactory = function(/*arguments,expression,name*/) {
-    if(cyclical>MAXCYCLICAL) {
-        console.log(cyclical);
-    }
+    //read variable arguments
     var args = arguments[0];
     var expr = arguments[1];
     var uniquename = arguments[2];
 
-    var expectedArguments = 0; //number of 'numberical' arguments later on, i.e. args.length
+    var expectedArguments = args ? args.length : 0; //count of 'numerical' arguments later on, i.e. args.length used to validate final factored functions' inputs
+
+    <!--factory arguments validation block-->
     if(!(arguments.length>=2 && arguments.length<=3)) {
         throw new Error('Wrong arguments: requires two arguments: a list of arguments and an expression')
     }
     else {
 
-        if( Object.prototype.toString.call(args) != '[object Array]' ) {
+        if( Object.prototype.toString.call(args) != '[object Array]' ) { //oddly the safest type checking method in JS...
             throw new Error('Wrong arguments: first argument needs to be an array of arguments');
-        } else {
-            if(args.length<=0) {
-                throw new Error('Wrong arguments: array of arguments cannot be empty');
-            } else {
-                expectedArguments= args.length;
-            }
+        } else if(args.length<=0) {
+            throw new Error('Wrong arguments: array of arguments cannot be empty');
         }
+
         if( Object.prototype.toString.call(expr) != '[object String]' ) {
             throw new Error('Wrong arguments: second needs to be a string');
-        } else {
-            if (expr.length<=0) {
-                throw new Error('Wrong arguments: expression empty');
-            }
+        } else if (expr.length<=0) {
+            throw new Error('Wrong arguments: expression empty');
         }
 
         //check if all arguments are legal words
         args.forEach(function(c) {
-            //examine if each of the arguments is in expression
-            if (checkIfLegal(c)) {
-                throw new Error ('Argument <strong>'+c+'</strong> is a reserved JavaScript keyword. Change it.')
-            }
+                checkIfLegal(c,function(arg) {
+                    //examine if each of the arguments is in expression
+                    throw new Error ('Argument <strong>'+arg+'</strong> is a reserved JavaScript keyword. Change it.')
+            })
         });
 
         var temp = new Array();
 
         args.forEach(function(c) {
-        //examine if each of the arguments is in expression
+        //put all arguments that cannot be found in the expressiong into temp
             var i = expr.indexOf(c);
             if (i == -1) {
                 temp.push(c);
@@ -78,40 +75,41 @@ var functionFactory = function(/*arguments,expression,name*/) {
             throw new Error('Arguments <strong>'+ msg +'</strong> are not in the expression. Check your expression or remove some arguments')
         }
     }
+    <!--END factory arguments validation block-->
 
-    var params = arguments[0];
-    var exp = arguments[1];
+    <!--final function factory block-->
 
-    var inner = function() {
+    //this handles the substitution in expression by numerical arguments
+    //e.g f(1,2) with expr = a*b returns 1*2
+    //declared in-line to keep "args" from scope
+    //it also looks up NULL argument values in the functionRegistry for globally defined arguments
+    var substitutionFunction = function() {
         if (cyclical>MAXCYCLICAL){
             cyclical=0;
             throw new Error('Cyclical computation: '+MAXCYCLICAL+' iterations limit reached');
         };
-        var expRepl = exp;
+        var expRepl = expr;
         for(var i=0; i<arguments.length; i++) {
             //if argument given is null or "", try lookup a value in the registry by its name
             if(!arguments[i]) {
                 try {
-                    arguments[i]=functionRegistry.argumentByName(params[i]);
+                    arguments[i]=functionRegistry.argumentByName(args[i]);
                 } catch (e)
                 {
                     throw e;
                 }
-
             }
-            expRepl = expRepl.split(params[i]).join(arguments[i]);
+            expRepl = expRepl.split(args[i]).join(arguments[i]);
         };
         return expRepl;
     };
 
-    //var res=inner.apply(null,arguments);
-
-    //with res instantiation done, let's test it with simple substitution of values =1 and in case the parser complains throw an exception
-    //catching and passing the parser exception
+    //catching validity of the syntax by useing  substitutionFunction for simple arguments stubArgs=[1,1,1,...]
+    // and in case the parser complains throw an exception containing parser exception message
     try {
-        var args = Array.apply(null, new Array(expectedArguments)).map(function(){return 1});
+        var stubArgs = Array.apply(null, new Array(expectedArguments)).map(function(){return 1});
         cyclical=cyclical+1;
-        var test = parser.parse(inner.apply(null,args));
+        var test = parser.parse(substitutionFunction.apply(null,stubArgs ));
         cyclical=cyclical-1;
     }
     catch (e) {
@@ -119,6 +117,9 @@ var functionFactory = function(/*arguments,expression,name*/) {
     }
 
 
+    //this is the final factored function
+    //it deals with variable arguments of correct number and type (Number or NULL allowed)
+    //it uses substitution and parser, returning parsed (computed) results
     var finalFunc = function() {
         var args;
         if(arguments.length!=expectedArguments) {
@@ -135,21 +136,21 @@ var functionFactory = function(/*arguments,expression,name*/) {
                 }
             });
         }
-        //execute substitution function
+
         cyclical=cyclical+1;
-        var x = inner.apply(null,args);
-        console.log(uniquename+"|"+x+"|");
-        //return the value
+        var x = substitutionFunction.apply(null,args);
+        //console.log(uniquename+"|"+x+"|");
         cyclical=cyclical-1;
         return parser.parse(x);
     };
 
-    //we assume everything is fine with res
+    //if we got to here, this means we had no exceptions, we can safely register "finalFunc" with functionRegistry
+    // it as long as we gave "uniquename" argument as the third parameter
     if(uniquename) {
-        functionRegistry.registerFunction(uniquename,finalFunc); //saving res for future evaluations
+        functionRegistry.registerFunction(uniquename,finalFunc);
     }
 
-
+    <!--END final function factory block-->
 
     return finalFunc;
 };
