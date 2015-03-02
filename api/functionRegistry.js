@@ -3,16 +3,18 @@
  */
 
 //module globals
-var registeredFunctions={};
-var registeredArguments={};
+
 
 module.exports =  {
+    registeredFunctions : {},
+    registeredArguments : {},
+
     registerFunction : function(uniquename,f) {
-        registeredFunctions[uniquename]=f;
+        this.registeredFunctions[uniquename]=f;
         //console.log("function registered" + f);
     },
     functionByUniqueName : function(uniquename) {
-        var r = registeredFunctions[uniquename];
+        var r = this.registeredFunctions[uniquename];
         if (r) {
             return r;
         } else {
@@ -29,8 +31,8 @@ module.exports =  {
         }
     },
     functionValueInRegisteredContext: function(name) {
-        if(registeredFunctions[name]) {
-            var f = registeredFunctions[name];
+        if(this.registeredFunctions[name]) {
+            var f = this.registeredFunctions[name];
             var res=f(); //execute without any arguments to coerce function to look in environment
 
             return res;
@@ -39,22 +41,23 @@ module.exports =  {
             throw new Error('Function '+name+' not registered in current context');
         }
     },
+    //K/V style
     registerArguments : function(args) {
-        registeredArguments=args;
+        this.registeredArguments=args;
     },
     deregister : function(arg) {
-        if (registeredArguments[arg]){
-            delete registeredArguments[arg];
+        if (this.registeredArguments[arg]){
+            delete this.registeredArguments[arg];
         }
-        if (registeredFunctions[arg]){
-            delete registeredFunctions[arg];
+        if (this.registeredFunctions[arg]){
+            delete this.registeredFunctions[arg];
         }
     },
     argumentByName : function(name) {
-        if (registeredArguments[name])
+        if (this.registeredArguments[name])
         {
-            return registeredArguments[name];
-        } else if(registeredFunctions[name])
+            return this.registeredArguments[name];
+        } else if(this.registeredFunctions[name])
         {
             try {
                 var result = this.functionValueInRegisteredContext(name);

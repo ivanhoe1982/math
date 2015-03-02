@@ -78,17 +78,7 @@ var functionFactory = function(/*arguments,expression,name*/) {
             throw new Error('Arguments <strong>'+ msg +'</strong> are not in the expression. Check your expression or remove some arguments')
         }
     }
-    //here we actually call the dynamic function constructor and get it into RES
-    //var inner = function(params,exp) {
-    //    var body =
-    //        '    var params=["'+params.join('","')+'"];'+
-    //        '    var expRepl="'+exp+'";'+
-    //        '    for(i=0; i<arguments.length; i++) {'+
-    //        '       expRepl = expRepl.split(params[i]).join(arguments[i]);'+
-    //        '    };'+
-    //        '    return expRepl;';
-    //    return new Function(params,body);
-    //};
+
     var params = arguments[0];
     var exp = arguments[1];
 
@@ -164,7 +154,10 @@ var functionFactory = function(/*arguments,expression,name*/) {
     return finalFunc;
 };
 
-module.exports = functionFactory;
+module.exports = {
+    factory: functionFactory,
+    registry: functionRegistry
+};
 
 
 
