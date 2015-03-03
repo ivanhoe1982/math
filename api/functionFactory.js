@@ -7,7 +7,22 @@ var parser = require('./pegjs/math.js');
 var functionRegistry=require('./functionRegistry.js');
 
 var cyclical=0;
-var MAXCYCLICAL=1000;
+var MAXCYCLICAL=2000;
+
+/**
+ * Dynamically creates a function based on list of arguments and parsable expression in a set PEGJS grammar.
+ * @function
+ * @param word - word to check
+ */
+function checkIfLegal(word) {
+    var reservedKeywords = [
+        'do','if','in','for','let','new','try','var','case','else','enum','eval','null','this','true','void','with','break',
+        'catch','class','const','false','super','throw','while','yield','delete','export','import','public','return',
+        'static','switch','typeof','default','extends','finally','package','private','continue','debugger','function',
+        'arguments','interface','protected','implements','instanceof'];
+    return reservedKeywords.indexOf(word.toLowerCase()) ==-1
+};
+
 /**
  * Dynamically creates a function based on list of arguments and parsable expression in a set PEGJS grammar.
  *
@@ -16,24 +31,14 @@ var MAXCYCLICAL=1000;
  * @param {string} expression - PEGJS grammar compliant expression
  */
 
-var checkIfLegal= function(word,errorf) {
-    var reservedKeywords = [
-        'do','if','in','for','let','new','try','var','case','else','enum','eval','null','this','true','void','with','break',
-        'catch','class','const','false','super','throw','while','yield','delete','export','import','public','return',
-        'static','switch','typeof','default','extends','finally','package','private','continue','debugger','function',
-        'arguments','interface','protected','implements','instanceof'];
-    if (reservedKeywords.indexOf(word.toLowerCase()) >-1) {
-        errorf(word)
-    }
-};
+var functionFactory = function(args, expr, uniquename) {
+    ////read variable arguments
+    //var args = arguments[0];
+    //var expr = arguments[1];
+    //var uniquename = arguments[2];
 
-var functionFactory = function(/*arguments,expression,name*/) {
-    //read variable arguments
-    var args = arguments[0];
-    var expr = arguments[1];
-    var uniquename = arguments[2];
-
-    var expectedArguments = args ? args.length : 0; //count of 'numerical' arguments later on, i.e. args.length used to validate final factored functions' inputs
+    var expectedArguments = args ? args.length : 0; //count of 'numerical' arguments later on, i.e. args.length used to
+                                                    // validate final factored functions' inputs
 
     <!--factory arguments validation block-->
     if(!(arguments.length>=2 && arguments.length<=3)) {
@@ -55,24 +60,23 @@ var functionFactory = function(/*arguments,expression,name*/) {
 
         //check if all arguments are legal words
         args.forEach(function(c) {
-                checkIfLegal(c,function(arg) {
-                    //examine if each of the arguments is in expression
-                    throw new Error ('Argument <strong>'+arg+'</strong> is a reserved JavaScript keyword. Change it.')
-            })
-        });
+                        if (!checkIfLegal(c)){
+                            throw new Error ('Argument <strong>'+c+'</strong> is a reserved JavaScript keyword. Change it.')
+                        }
+                    }
+        );
 
-        var temp = new Array();
+        var temp = [];
 
+        //put all arguments that cannot be found in the expression into temp
         args.forEach(function(c) {
-        //put all arguments that cannot be found in the expressiong into temp
-            var i = expr.indexOf(c);
+            i = expr.indexOf(c);
             if (i == -1) {
                 temp.push(c);
             }
         });
         if (temp.length>0) {
-            var msg = temp.join(', ');
-            throw new Error('Arguments <strong>'+ msg +'</strong> are not in the expression. Check your expression or remove some arguments')
+            throw new Error('Arguments <strong>'+ temp.join(', ') +'</strong> are not in the expression. Check your expression or remove some arguments')
         }
     }
     <!--END factory arguments validation block-->
@@ -93,7 +97,9 @@ var functionFactory = function(/*arguments,expression,name*/) {
             //if argument given is null or "", try lookup a value in the registry by its name
             if(!arguments[i]) {
                 try {
-                    arguments[i]=functionRegistry.argumentByName(args[i]);
+                    cyclical=cyclical+1;
+                    arguments[i]=functionRegistry.valueByName(args[i]);
+                    cyclical=cyclical-1;
                 } catch (e)
                 {
                     throw e;
@@ -104,13 +110,12 @@ var functionFactory = function(/*arguments,expression,name*/) {
         return expRepl;
     };
 
-    //catching validity of the syntax by useing  substitutionFunction for simple arguments stubArgs=[1,1,1,...]
-    // and in case the parser complains throw an exception containing parser exception message
+    //checking validity of the syntax by using  substitutionFunction for simple set arguments stubArgs=[1,1,1,...]
+    //and doing a one time parse, in case the parser complains throw an exception containing parser exception message
+    // included
     try {
         var stubArgs = Array.apply(null, new Array(expectedArguments)).map(function(){return 1});
-        cyclical=cyclical+1;
-        var test = parser.parse(substitutionFunction.apply(null,stubArgs ));
-        cyclical=cyclical-1;
+        parser.parse(substitutionFunction.apply(null,stubArgs ));
     }
     catch (e) {
         throw new Error('Expression cannot be parsed: '+arguments[1] + ' | Parser says: <strong>' +e.message + '</strong>');
@@ -121,33 +126,31 @@ var functionFactory = function(/*arguments,expression,name*/) {
     //it deals with variable arguments of correct number and type (Number or NULL allowed)
     //it uses substitution and parser, returning parsed (computed) results
     var finalFunc = function() {
-        var args;
+
         if(arguments.length!=expectedArguments) {
-            if (uniquename && arguments.length==0) { //if it has unique name and NOTHING was supplied, try to execute by suppling blanks for environment execution
-                args = Array.apply(null, new Array(expectedArguments)).map(function(){return null});
+            if (uniquename && arguments.length==0) { //if it has unique name (=isRegistered) and NOTHING was supplied, try to execute by suppling blanks for registry value lookup
+                someargs = Array.apply(null, new Array(expectedArguments)).map(function(){return null});
+                return parser.parse(substitutionFunction.apply(null,someargs));
             } else {
                 throw new Error('Incorrect number of arguments. Expected <strong>'+expectedArguments+'</strong>');
             }
-        } else {
-            args = Array.prototype.slice.call(arguments); //convert to array to perform type check
-            args.forEach(function(a){
-                if( !(typeof a == "number" || a === null) ) {
+
+        } else { //else it is the expected number of arguments, check types
+            Array.prototype.slice.call(arguments).forEach(function(a){
+                if ( !(typeof a == "number" || a === null) ) {
                     throw new Error('Arguments have to be numbers or null. Incorrect argument <strong>'+a+'</strong>')
                 }
             });
+            return parser.parse(substitutionFunction.apply(null,arguments));
         }
 
-        cyclical=cyclical+1;
-        var x = substitutionFunction.apply(null,args);
-        //console.log(uniquename+"|"+x+"|");
-        cyclical=cyclical-1;
-        return parser.parse(x);
+
     };
 
-    //if we got to here, this means we had no exceptions, we can safely register "finalFunc" with functionRegistry
+    //if we got until here, this means we had no exceptions, function is OK we can safely register "finalFunc" with functionRegistry
     // it as long as we gave "uniquename" argument as the third parameter
     if(uniquename) {
-        functionRegistry.registerFunction(uniquename,finalFunc);
+        functionRegistry.register(uniquename,finalFunc);
     }
 
     <!--END final function factory block-->
@@ -157,7 +160,10 @@ var functionFactory = function(/*arguments,expression,name*/) {
 
 module.exports = {
     factory: functionFactory,
-    registry: functionRegistry
+    registry: functionRegistry,
+    setMaxDepth: function(m) {
+        MAXCYCLICAL=m;
+    }
 };
 
 

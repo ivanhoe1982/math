@@ -2,73 +2,75 @@
  * Created by ivanhoe on 3/1/15.
  */
 
-//module globals
-
+function merge(target, source) {
+    if ( typeof target !== 'object' ) {
+        target = {};
+    }
+    for (var property in source) {
+        if ( source.hasOwnProperty(property) ) {
+            var sourceProperty = source[ property ];
+            if ( typeof sourceProperty === 'object' ) {
+                target[ property ] = util.merge( target[ property ], sourceProperty );
+                continue;
+            }
+            target[ property ] = sourceProperty;
+        }
+    }
+    for (var a = 2, l = arguments.length; a < l; a++) {
+        merge(target, arguments[a]);
+    }
+    return target;
+};
 
 module.exports =  {
-    registeredFunctions : {},
-    registeredArguments : {},
+    registeredEntities : {},
 
-    registerFunction : function(uniquename,f) {
-        this.registeredFunctions[uniquename]=f;
-        //console.log("function registered" + f);
+    register : function(uniquename,f) {
+        this.registeredEntities[uniquename]=f;
     },
-    functionByUniqueName : function(uniquename) {
-        var r = this.registeredFunctions[uniquename];
-        if (r) {
-            return r;
+
+    //K/V style merge with priority
+    registerBulk : function(args) {
+        merge(this.registeredEntities,args);
+    },
+
+    //this will attempt to execute a function if called, primitives are returned by value
+    valueByName : function(uniquename) {
+        if (this.registeredEntities[uniquename] && typeof this.registeredEntities[uniquename] == 'function') {
+            return this.registeredEntities[uniquename](); //execute the function with null arguments to coerce it to look in for args in other registeredentities
+        } else if (this.registeredEntities[uniquename]) {
+            return this.registeredEntities[uniquename];
         } else {
-            throw new Error('Function not registered: <strong>'+uniquename+'</strong>');
+            throw new Error('Entity not registered: <strong>'+uniquename+'</strong>');
         }
     },
-    hasFunctionByUniqueName : function(uniquename) {
-        //TODO: exception as control structure... remove?
+
+    //this will attempt to return a function if called, primitives are returned by value
+    objectByName : function(uniquename) {
+        if (this.registeredEntities[uniquename]) {
+            return this.registeredEntities[uniquename];
+        } else {
+            throw new Error('Entity not registered: <strong>'+uniquename+'</strong>');
+        }
+    },
+
+    deregister : function(uniquename) {
+        if (this.registeredEntities[uniquename]) {
+            delete this.registeredEntities[uniquename];
+        }
+    },
+
+    //a bit of a cheat: normally exceptions should not be used for 'control flow'
+    hasByName : function(uniquename) {
         try {
-            this.functionByUniqueName(uniquename);
+            this.objectByName(uniquename);
             return true;
         } catch(e) {
             return false;
         }
     },
-    functionValueInRegisteredContext: function(name) {
-        if(this.registeredFunctions[name]) {
-            var f = this.registeredFunctions[name];
-            var res=f(); //execute without any arguments to coerce function to look in environment
-
-            return res;
-
-        } else {
-            throw new Error('Function '+name+' not registered in current context');
-        }
-    },
-    //K/V style
-    registerArguments : function(args) {
-        this.registeredArguments=args;
-    },
-    deregister : function(arg) {
-        if (this.registeredArguments[arg]){
-            delete this.registeredArguments[arg];
-        }
-        if (this.registeredFunctions[arg]){
-            delete this.registeredFunctions[arg];
-        }
-    },
-    argumentByName : function(name) {
-        if (this.registeredArguments[name])
-        {
-            return this.registeredArguments[name];
-        } else if(this.registeredFunctions[name])
-        {
-            try {
-                var result = this.functionValueInRegisteredContext(name);
-                return result;
-            } catch(e) {
-                throw e;
-            }
-
-        } else {
-            throw new Error('Argument or function not registered: <strong>'+name+'</strong>');
-        }
-
+    purge: function() {
+        this.registeredEntities = {};
     }
+
 };
