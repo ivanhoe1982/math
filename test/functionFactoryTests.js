@@ -106,7 +106,7 @@ describe('functionFactory',function() {
             functionC(1).should.equal(1);
         });
 
-        it('should handle special case of token "new"', function () {
+        it('should throw exception if javascript reserved words are used as names of arguments', function () {
             functionFactory.bind(null, ["new"], 'new').should.throw(/^Argument <strong>new<\/strong> is a reserved JavaScript keyword. Change it./);
             functionFactory.bind(null, ["instanceof"], 'instanceof').should.throw(/^Argument <strong>instanceof<\/strong> is a reserved JavaScript keyword. Change it./);
         });
@@ -303,7 +303,7 @@ describe('performance',function(){
 
         functionRegistry.registerBulk({a:1,b:1,c:1,d:1,e:1,f:1,g:1});
         functionFactory(['a','b','c','d','e','f','g'],'a+b+c+d+e+f+g','g0');
-        var iterations=25000; //12500
+        var iterations=1000; //25000
         functions.setMaxDepth(1);
 
         console.log('adding');
@@ -316,7 +316,7 @@ describe('performance',function(){
         console.log('calculating');
         functionRegistry.calculateSystem(); //this will require rebuilding dependencies later
         var res = f();
-        res.should.be.equal(150007);
+        res.should.be.equal(6007);
 
     });
 
