@@ -254,6 +254,11 @@ describe('performance',function(){
     var functionFactory = functions.factory;
     var functionRegistry = functions.registry;
 
+    beforeEach(function (done) {
+        functionRegistry.purge();
+        done();
+    });
+
     it('should allow creating 1000 functions in less than a second', function(){
         functionRegistry.purge();
         for(var i=0;i<1000;i++) {
@@ -298,26 +303,24 @@ describe('performance',function(){
 
         functionRegistry.registerBulk({a:1,b:1,c:1,d:1,e:1,f:1,g:1});
         functionFactory(['a','b','c','d','e','f','g'],'a+b+c+d+e+f+g','g0');
-        var iterations=12500; //12500
-        functions.setMaxDepth(iterations);
+        var iterations=25000; //12500
+        functions.setMaxDepth(1);
 
+        console.log('adding');
         for(var i=1;i<=iterations;i++) {
             //make each subsequent function dependent on the result of previous one, starting with g0
             f = functionFactory(['a','b','c','d','e','f','g'+(i-1)],'a+b+c+d+e+f+g'+(i-1),'g'+i);
         };
         Object.keys(functionRegistry.registeredEntities).length.should.be.equal(iterations+8);
         //execute the last one, cascading dependencies on every single one before
+        console.log('calculating');
         functionRegistry.calculateSystem(); //this will require rebuilding dependencies later
         var res = f();
-        res.should.be.equal(75007);
+        res.should.be.equal(150007);
 
     });
 
-    it('should identify which functions are tail functions',function(){
-
-    });
-
-    if('should solve the whole equation without recursion');
+    it('should automatically switch to linear evaluation if stack limit hit');
 
 
 });

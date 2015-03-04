@@ -11,13 +11,6 @@ var functionRegistry = functions.registry;
 
 // Create your app
 var app = angular.module('mathapp',[]);
-Object.size = function(obj) {
-    var size = 0, key;
-    for (key in obj) {
-        if (obj.hasOwnProperty(key)) size++;
-    }
-    return size;
-};
 
 app.controller('testsController', ['$scope', function($scope) {
     $scope.addSharedArgument = function() {

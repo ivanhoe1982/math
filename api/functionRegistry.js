@@ -2,73 +2,34 @@
  * Created by ivanhoe on 3/1/15.
  */
 
-function merge(target, source) {
-    if ( typeof target !== 'object' ) {
-        target = {};
-    }
-    for (var property in source) {
-        if ( source.hasOwnProperty(property) ) {
-            var sourceProperty = source[ property ];
-            if ( typeof sourceProperty === 'object' ) {
-                target[ property ] = util.merge( target[ property ], sourceProperty );
-                continue;
-            }
-            target[ property ] = sourceProperty;
-        }
-    }
-    for (var a = 2, l = arguments.length; a < l; a++) {
-        merge(target, arguments[a]);
-    }
-    return target;
-};
-
-
-var Root = function() {
-    return {
-        //TODO: change this into an sorted array to remove the last limit
-        dependsOn : function(uniquename,f,newargs) {
-
-            //if root depends on new function
-            if(this.args && this.args.indexOf(uniquename)>-1) { //uniquename is in args
-                //replace root with the new function, and make current root a dependency
-                return {n:uniquename, func:f,args:newargs,dep:[this]};
-            } else if(!this.dep) {
-                //we got to the bottom, put this as dependency, stop
-                this.dep = {n:uniquename, func:f,args:newargs,dep:null,dependsOn:this.dependsOn};
-                return this;
-            } else {
-                var newF = this.dep.dependsOn(uniquename,f,newargs);
-                this.dep = newF;
-                return this;
-            }
-        },
-        n:null,
-            func:null, //object
-        args:[],
-        dep:null  //dependencies
-    }
-};
-
 module.exports =  {
     registeredEntities : {},
-    root: new Root(),
+    sortedEntities : [],
     cache: {},
+
 
     calculateSystem : function() {
         this.cache={};
-        var x = this.root.dep;
-        while(x) {
-            //cache by uniquename
-            this.cache[x.n]= this.valueByName(x.n);
-            x= x.dep;
+        for (var i=0; i<this.sortedEntities.length; i++) {
+            var n = this.sortedEntities[i].n;
+            this.cache[n]= this.valueByName(n);
         }
+    },
+
+    depends : function(args,uniquename) {
+        //if root depends on new function
+        return (args && args.indexOf(uniquename)>-1)
+
     },
 
     register : function(uniquename,f,args) {
         this.registeredEntities[uniquename]=f;
 
-        this.root = this.root.dependsOn(uniquename,f,args);
-
+        var i = 0;
+        while(this.sortedEntities[i] && this.sortedEntities[i].args && !this.depends(this.sortedEntities[i].args,uniquename)) {
+            i++;
+        }
+        this.sortedEntities.splice(i,0,{n:uniquename,args:args});
     },
 
     //K/V style merge with priority
@@ -120,7 +81,7 @@ module.exports =  {
     },
     purge: function() {
         this.registeredEntities = {};
-        this.root = new Root();
+        this.sortedEntities = [];
         this.cache= {};
     }
 
