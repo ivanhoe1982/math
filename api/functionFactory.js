@@ -7,7 +7,7 @@ var parser = require('./pegjs/math.js');
 var functionRegistry=require('./functionRegistry.js');
 
 var cyclical=0;
-var MAXCYCLICAL=2000;
+var MAXCYCLICAL=2000; //can be changed with setMaxDepth
 
 /**
  * Dynamically creates a function based on list of arguments and parsable expression in a set PEGJS grammar.
@@ -143,14 +143,12 @@ var functionFactory = function(args, expr, uniquename) {
             });
             return parser.parse(substitutionFunction.apply(null,arguments));
         }
-
-
     };
 
     //if we got until here, this means we had no exceptions, function is OK we can safely register "finalFunc" with functionRegistry
     // it as long as we gave "uniquename" argument as the third parameter
     if(uniquename) {
-        functionRegistry.register(uniquename,finalFunc);
+        functionRegistry.register(uniquename,finalFunc,args);
     }
 
     <!--END final function factory block-->

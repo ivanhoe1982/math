@@ -58,10 +58,13 @@ describe('functionFactory',function() {
         var functionA;
         var functionB;
         var functionC;
+
         beforeEach(function (done) {
+            functionRegistry.purge();
             functionA = functionFactory(["one", "two", "three"], 'one*2+two^2*three');
             functionB = functionFactory(["one", "two"], 'one*2+two^2');
             functionC = functionFactory(["one"], 'one');
+
             done();
         });
 
@@ -107,13 +110,23 @@ describe('functionFactory',function() {
             functionFactory.bind(null, ["new"], 'new').should.throw(/^Argument <strong>new<\/strong> is a reserved JavaScript keyword. Change it./);
             functionFactory.bind(null, ["instanceof"], 'instanceof').should.throw(/^Argument <strong>instanceof<\/strong> is a reserved JavaScript keyword. Change it./);
         });
+    });
 
-        it('should register a with functionRegistry if functionFactory given third argument', function () {
+    describe('third parameter given', function() {
+
+        beforeEach(function (done) {
+            functionRegistry.purge();
+            done();
+        });
+
+        it('should register a with functionRegistry', function () {
             var functionA = functionFactory(["one", "two", "three"], 'one*2+two^2*three', 'sampleFunction');
+            functionRegistry.objectByName('sampleFunction').should.not.be.null;
 
         });
 
         it('if itself registered, calling it with some null parameters should start lookup in registered arguments in functionRegister"', function () {
+
             var args = {one: 1, two: 2};
             functionRegistry.registerBulk(args);
             functionRegistry.valueByName('one').should.equal(1);
@@ -127,6 +140,7 @@ describe('functionFactory',function() {
 
         it('if itself registered, it should look for value in functionRegistry if argument name equals name of a registered function"', function () {
             //we will register a handful of arguments and call a function dependent on another function
+            functionRegistry.purge();
             var args = {one: 1, two: 2, three: 3};
             functionRegistry.registerBulk(args);
 
@@ -137,6 +151,7 @@ describe('functionFactory',function() {
             res.should.equal(1 * 2 + Math.pow(2, 2) * 14);
         });
         it('if itself registered, should look for value and throw if functionRegistry throws"', function () {
+            functionRegistry.purge();
             var args = {one: 1, two: 2, three: 3};
             functionRegistry.registerBulk(args);
 
@@ -152,6 +167,11 @@ describe('functionFactory',function() {
 describe('functionRegistry',function() {
     var functionFactory = functions.factory;
     var functionRegistry = functions.registry;
+
+    beforeEach(function (done) {
+        functionRegistry.purge();
+        done();
+    });
 
     it('should return a function by name',function(){
         var functionA=functionFactory(["one","two","three"],'one*2+two^2*three','sampleFunction');
@@ -170,7 +190,7 @@ describe('functionRegistry',function() {
         var functionA=functionFactory(["one","two","three"],'one*2+two^2*three','sampleFunction');
 
         functionRegistry.hasByName('sampleFunction').should.be.exactly(true);
-        functionRegistry.hasByName('sampleFunction2').should.not.be.exactly(false);
+        functionRegistry.hasByName('sampleFunction2').should.not.be.exactly(true);
     });
 
     it('should accept a dictionary of arguments for a system of functions',function(){
@@ -204,7 +224,7 @@ describe('functionRegistry',function() {
 
     it('should throw if function evaluated more than N times in one computation chain',function(){
         var args = {one: 1, two: 2, three: 3};
-        functionRegistry.register(args);
+        functionRegistry.registerBulk(args);
 
         var functionA=functionFactory(["one","two","s2"],'one*2+two^2*s2','s1');
         var functionB=functionFactory(["one","two","s1"],'one*2+two^2*s1','s2');
@@ -251,7 +271,7 @@ describe('performance',function(){
     });
 
     //it.only('should allow calculating dependent functions in less than a second', function(){
-    it('should allow calculating dependent functions in less than a second', function(){
+    it('should calculate dependent functions by iterative comp until max call stack size', function(){
         functionRegistry.purge();
         var f;
 
@@ -271,5 +291,33 @@ describe('performance',function(){
         res.should.be.equal(13687);
 
     });
+
+    it('should calculate a whole system linearly', function(){
+        functionRegistry.purge();
+        var f;
+
+        functionRegistry.registerBulk({a:1,b:1,c:1,d:1,e:1,f:1,g:1});
+        functionFactory(['a','b','c','d','e','f','g'],'a+b+c+d+e+f+g','g0');
+        var iterations=12500; //12500
+        functions.setMaxDepth(iterations);
+
+        for(var i=1;i<=iterations;i++) {
+            //make each subsequent function dependent on the result of previous one, starting with g0
+            f = functionFactory(['a','b','c','d','e','f','g'+(i-1)],'a+b+c+d+e+f+g'+(i-1),'g'+i);
+        };
+        Object.keys(functionRegistry.registeredEntities).length.should.be.equal(iterations+8);
+        //execute the last one, cascading dependencies on every single one before
+        functionRegistry.calculateSystem(); //this will require rebuilding dependencies later
+        var res = f();
+        res.should.be.equal(75007);
+
+    });
+
+    it('should identify which functions are tail functions',function(){
+
+    });
+
+    if('should solve the whole equation without recursion');
+
 
 });
