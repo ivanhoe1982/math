@@ -194,10 +194,10 @@ describe('functionRegistry',function() {
     });
 
     it('should accept a dictionary of arguments for a system of functions',function(){
-        var args = {first: 1, second: 2};
+        var args = {first: 1, second: 0};
         functionRegistry.registerBulk(args);
         functionRegistry.objectByName('first').should.equal(1);
-        functionRegistry.objectByName('second').should.equal(2);
+        functionRegistry.objectByName('second').should.equal(0);
     });
 
     it('registerBulk shoud overwrite previously registered variable', function () {

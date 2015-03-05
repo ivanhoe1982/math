@@ -17,7 +17,7 @@ app.controller('testsController', ['$scope', function($scope) {
         if(!$scope.sharedArguments) {
             $scope.sharedArguments=[];
         }
-        $scope.sharedArguments.push({key:'some',value:1});
+        $scope.sharedArguments.push({key:'some',value:0});
     };
 
     $scope.removeSharedArgument = function(sharedArgument) {
@@ -32,7 +32,7 @@ app.controller('testsController', ['$scope', function($scope) {
     };
 
     $scope.removeFormula = function(formula) {
-        $scope.formulas.splice($scope.formulas.indexOf(formula), 1);
+        $scope.formulas.splice($scope.formulas.indexOf(formula), 0);
     };
 
     $scope.$watch('sharedArguments', function (sa,oldVal,s) {
@@ -42,12 +42,19 @@ app.controller('testsController', ['$scope', function($scope) {
             .map(function(a){
                 ret[a.key] = a.value;
             });
-        functionRegistry.registerArguments(ret);
+        functionRegistry.registerBulk(ret);
     },true);
 
 }]);
 
-app.controller('formulaController', ['$scope','$sce', function($scope,$sce) {
+app.controller('formulaController', ['$scope','$sce','$timeout', function($scope,$sce,$timeout) {
+
+    functionRegistry.onChange(function(){
+        //delayed call, otherwise we'll have  digest cycle
+        $timeout(function() {
+            $scope.formula.dirty=true;
+        }, 0);
+    });
 
     $scope.addArgument = function(formula) {
         if(!formula.arguments) {
@@ -70,7 +77,7 @@ app.controller('formulaController', ['$scope','$sce', function($scope,$sce) {
         var newFun;
         var newRes;
         try {
-            //TODO: formula names have to be unique, registry updates by default, so it cannot track it
+            //TODO: formula names have to be unique, registry updates by default, so it cannot doubles
             functionRegistry.deregister(oldVal.name);
             var argNames = Array.apply(null, formula.arguments).map(function(a){return a.name});
             newFun = functionFactory(argNames,formula.expression,formula.name);
@@ -86,6 +93,7 @@ app.controller('formulaController', ['$scope','$sce', function($scope,$sce) {
             formula.message =  $sce.trustAsHtml(e.message.toString());
             //formula.function='';
         }
+        formula.dirty=false;
     },true);
 }]);
 

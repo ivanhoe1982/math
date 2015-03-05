@@ -2,7 +2,9 @@
  * Created by ivanhoe on 3/1/15.
  */
 
+
 module.exports =  {
+    notify:function(){},
     registeredEntities : {},
     sortedEntities : [],
     cache: {},
@@ -13,7 +15,8 @@ module.exports =  {
         for (var i=0; i<this.sortedEntities.length; i++) {
             var n = this.sortedEntities[i].n;
             this.cache[n]= this.valueByName(n);
-        }
+        };
+        this.notify();
     },
 
     depends : function(args,uniquename) {
@@ -22,7 +25,7 @@ module.exports =  {
 
     },
 
-    register : function(uniquename,f,args) {
+    register : function(uniquename,f,args,bulk) {
         this.registeredEntities[uniquename]=f;
 
         var i = 0;
@@ -30,15 +33,21 @@ module.exports =  {
             i++;
         }
         this.sortedEntities.splice(i,0,{n:uniquename,args:args});
+        if (!bulk) {
+            this.notify();
+        }
     },
 
     //K/V style merge with priority
     registerBulk : function(args) {
+
         for (var k in args) {
             if (args.hasOwnProperty(k)) {
-                this.register(k,args[k],[]);
+                this.register(k,args[k],[],true);
             }
         }
+
+        this.notify();
     },
 
     //this will attempt to execute a function if called, primitives are returned by value
@@ -46,9 +55,9 @@ module.exports =  {
         if(this.cache[uniquename]) {
             return this.cache[uniquename];
         }
-        if (this.registeredEntities[uniquename] && typeof this.registeredEntities[uniquename] == 'function') {
+        if (typeof this.registeredEntities[uniquename] === 'function') {
             return this.registeredEntities[uniquename](); //execute the function with null arguments to coerce it to look in for args in other registeredentities
-        } else if (this.registeredEntities[uniquename]) {
+        } else if (this.registeredEntities[uniquename] !== undefined) {
             return this.registeredEntities[uniquename];
         } else {
             throw new Error('Entity not registered: <strong>'+uniquename+'</strong>');
@@ -57,7 +66,7 @@ module.exports =  {
 
     //this will attempt to return a function if called, primitives are returned by value
     objectByName : function(uniquename) {
-        if (this.registeredEntities[uniquename]) {
+        if (this.registeredEntities[uniquename] !== undefined) {
             return this.registeredEntities[uniquename];
         } else {
             throw new Error('Entity not registered: <strong>'+uniquename+'</strong>');
@@ -67,6 +76,7 @@ module.exports =  {
     deregister : function(uniquename) {
         if (this.registeredEntities[uniquename]) {
             delete this.registeredEntities[uniquename];
+            this.notify();
         }
     },
 
@@ -83,6 +93,11 @@ module.exports =  {
         this.registeredEntities = {};
         this.sortedEntities = [];
         this.cache= {};
+        this.notify();
+    },
+
+    onChange:function(n){
+        this.notify=n;
     }
 
 };

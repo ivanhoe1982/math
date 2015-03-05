@@ -160,7 +160,7 @@ module.exports = function(grunt) {
     // ===========================================================================
     //'jshint',
     //grunt.registerTask('development', ['peg','browserify','copy']);
-    grunt.registerTask('development', ['peg','browserify','copy','htmlmin','cssmin']); //copy instead of uglify
-    grunt.registerTask('production', ['peg','browserify','uglify', 'htmlmin', 'cssmin']);
+    grunt.registerTask('watchdev', ['watch']); //copy instead of uglify
+    grunt.registerTask('default', ['peg','browserify','uglify', 'htmlmin', 'cssmin']);
 
 };
